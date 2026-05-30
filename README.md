@@ -21,7 +21,7 @@ WeRead Review 是一个基于前后端分离架构开发的微信读书划线复
   - 核心逻辑：基于 `fetch` 封装的响应式数据流加载
 - **后端 (Back-end)**：
   - 框架：FastAPI (Python)
-  - 数据库：SQLite (基于 SQLAlchemy ORM)
+  - 数据库：MySQL 8.0+ (基于 SQLAlchemy ORM)
   - 语音合成：`edge-tts` 提供流式音频 (StreamingResponse)
   - 用户认证：JWT (JSON Web Tokens)
 
@@ -58,7 +58,7 @@ copy .env.example .env  # Windows
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-> **注意：** 确保后端成功启动后，会在 `back` 目录下自动生成 `test.db`（SQLite 数据库文件），此时 API 服务准备就绪。
+> **注意：** 确保你在本地或服务器上已经启动了 MySQL，并创建了对应的数据库（如 `weread_review`），同时在 `.env` 中正确配置了 `DATABASE_URL`，系统会自动建表并启动服务。
 
 ### 2. 启动前端 (Vue3 + Vite)
 
