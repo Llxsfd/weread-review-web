@@ -1,0 +1,6 @@
+DROP DATABASE IF EXISTS weread_review;
+
+CREATE DATABASE weread_review
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_unicode_ci;
+
