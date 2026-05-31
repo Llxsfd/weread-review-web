@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, books, collections, dashboard, data_center, highlights, profile, review, settings as settings_routes, sync, tts
+from app.api.routes import auth, books, collections, dashboard, data_center, highlights, profile, review, settings as settings_routes, sync, tts, ai_chat
 from app.core.config import get_settings
 
 
@@ -31,6 +31,7 @@ def create_app() -> FastAPI:
     app.include_router(profile.router)
     app.include_router(settings_routes.router)
     app.include_router(sync.router)
+    app.include_router(ai_chat.router)
     app.include_router(tts.router, prefix="/api/tts", tags=["tts"])
 
     return app

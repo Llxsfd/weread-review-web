@@ -228,4 +228,25 @@ CREATE TABLE `users`  (
   UNIQUE INDEX `ix_users_email`(`email`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
 
+-- ----------------------------
+-- Table structure for highlight_ai_chats
+-- ----------------------------
+DROP TABLE IF EXISTS `highlight_ai_chats`;
+CREATE TABLE `highlight_ai_chats`  (
+  `id` int(0) NOT NULL AUTO_INCREMENT,
+  `user_id` int(0) NOT NULL,
+  `highlight_id` int(0) NOT NULL,
+  `role` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `prompt_tokens` int(0) NOT NULL DEFAULT 0,
+  `completion_tokens` int(0) NOT NULL DEFAULT 0,
+  `created_at` datetime(0) NOT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `ix_highlight_ai_chats_user_id`(`user_id`) USING BTREE,
+  INDEX `ix_highlight_ai_chats_highlight_id`(`highlight_id`) USING BTREE,
+  INDEX `idx_user_highlight`(`user_id`, `highlight_id`) USING BTREE,
+  CONSTRAINT `highlight_ai_chats_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `highlight_ai_chats_ibfk_2` FOREIGN KEY (`highlight_id`) REFERENCES `highlights` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+
 SET FOREIGN_KEY_CHECKS = 1;

@@ -21,3 +21,15 @@ export async function saveWeReadKey(apiKey: string): Promise<{ configured: boole
   })
   return data
 }
+
+export async function fetchAiKey(): Promise<{ api_key: string; configured: boolean }> {
+  const { data } = await apiClient.get<{ api_key: string; configured: boolean }>('/api/settings/ai-key')
+  return data
+}
+
+export async function saveAiKey(apiKey: string): Promise<{ configured: boolean }> {
+  const { data } = await apiClient.put<{ configured: boolean }>('/api/settings/ai-key', {
+    api_key: apiKey
+  })
+  return data
+}

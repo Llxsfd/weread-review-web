@@ -8,46 +8,85 @@
   </section>
 
   <section class="profile-main-grid">
-    <article class="panel profile-panel primary-card">
-      <div class="panel-head">
-        <div>
-          <p class="section-kicker">数据来源</p>
-          <h3>微信读书 API Key</h3>
+    <div class="profile-primary-col" style="display: flex; flex-direction: column; gap: 24px;">
+      <article class="panel profile-panel primary-card">
+        <div class="panel-head">
+          <div>
+            <p class="section-kicker">数据来源</p>
+            <h3>微信读书 API Key</h3>
+          </div>
         </div>
-      </div>
-      <div class="key-setup-block">
-        <p class="muted">
-          绑定微信读书以同步您的阅读记录与划线笔记。请在
-          <a class="text-link" href="https://weread.qq.com/r/weread-skills" target="_blank" rel="noreferrer">
-            微信读书 Skill 配置页
-          </a>
-          获取 Key 并填入下方。
-        </p>
-        <label class="field-label">API Key</label>
-        <div class="secret-field">
-          <input
-            v-model="wereadKey"
-            class="search-input full"
-            :type="showWeReadKey ? 'text' : 'password'"
-            :placeholder="keyPlaceholder"
-          />
-          <button
-            class="secret-toggle"
-            :aria-label="showWeReadKey ? '隐藏 API Key' : '查看 API Key'"
-            @click="toggleWeReadKey"
-          >
-            <EyeOff v-if="showWeReadKey" :size="18" />
-            <Eye v-else :size="18" />
+        <div class="key-setup-block">
+          <p class="muted">
+            绑定微信读书以同步您的阅读记录与划线笔记。请在
+            <a class="text-link" href="https://weread.qq.com/r/weread-skills" target="_blank" rel="noreferrer">
+              微信读书 Skill 配置页
+            </a>
+            获取 Key 并填入下方。
+          </p>
+          <label class="field-label">API Key</label>
+          <div class="secret-field">
+            <input
+              v-model="wereadKey"
+              class="search-input full"
+              :type="showWeReadKey ? 'text' : 'password'"
+              :placeholder="keyPlaceholder"
+            />
+            <button
+              class="secret-toggle"
+              :aria-label="showWeReadKey ? '隐藏 API Key' : '查看 API Key'"
+              @click="toggleWeReadKey"
+            >
+              <EyeOff v-if="showWeReadKey" :size="18" />
+              <Eye v-else :size="18" />
+            </button>
+          </div>
+          <button class="primary-action full" :disabled="savingKey" @click="saveKey">
+            {{ savingKey ? '保存中...' : '保存配置' }}
           </button>
+          <p v-if="keyStatusText" class="status-msg" :class="{ success: settingsStore.status?.weread_key_configured }">
+            {{ keyStatusText }}
+          </p>
         </div>
-        <button class="primary-action full" :disabled="savingKey" @click="saveKey">
-          {{ savingKey ? '保存中...' : '保存配置' }}
-        </button>
-        <p v-if="keyStatusText" class="status-msg" :class="{ success: settingsStore.status?.weread_key_configured }">
-          {{ keyStatusText }}
-        </p>
-      </div>
-    </article>
+      </article>
+
+      <article class="panel profile-panel primary-card">
+        <div class="panel-head">
+          <div>
+            <p class="section-kicker">AI 伴读</p>
+            <h3>AI API Key (BYOK)</h3>
+          </div>
+        </div>
+        <div class="key-setup-block">
+          <p class="muted">
+            请在此配置您的 AI API Key。系统支持兼容 OpenAI 格式的模型（如 DeepSeek、Qwen 等）。目前默认接入 <strong>DeepSeek</strong>，接口地址为 <code>https://api.deepseek.com</code>。
+          </p>
+          <label class="field-label">API Key</label>
+          <div class="secret-field">
+            <input
+              v-model="aiKey"
+              class="search-input full"
+              :type="showAiKey ? 'text' : 'password'"
+              :placeholder="aiKeyPlaceholder"
+            />
+            <button
+              class="secret-toggle"
+              :aria-label="showAiKey ? '隐藏 AI Key' : '查看 AI Key'"
+              @click="toggleAiKey"
+            >
+              <EyeOff v-if="showAiKey" :size="18" />
+              <Eye v-else :size="18" />
+            </button>
+          </div>
+          <button class="primary-action full" :disabled="savingAiKey" @click="saveAiKeySubmit">
+            {{ savingAiKey ? '保存中...' : '保存配置' }}
+          </button>
+          <p v-if="aiKeyStatusText" class="status-msg" :class="{ success: settingsStore.status?.ai_key_configured }">
+            {{ aiKeyStatusText }}
+          </p>
+        </div>
+      </article>
+    </div>
 
     <div class="profile-secondary-col">
       <article class="panel profile-panel">
@@ -82,7 +121,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Eye, EyeOff } from 'lucide-vue-next'
 import { fetchProfile, updatePassword, updateProfile, type UserProfile } from '../api/profile'
-import { fetchWeReadKey, saveWeReadKey } from '../api/settings'
+import { fetchWeReadKey, saveWeReadKey, fetchAiKey, saveAiKey } from '../api/settings'
 import { useAuthStore } from '../stores/auth'
 import { useSettingsStore } from '../stores/settings'
 
@@ -98,9 +137,15 @@ const showWeReadKey = ref(false)
 const savingProfile = ref(false)
 const savingPassword = ref(false)
 const savingKey = ref(false)
+
+const aiKey = ref('')
+const showAiKey = ref(false)
+const savingAiKey = ref(false)
+
 const profileMessage = ref('')
 const passwordMessage = ref('修改密码后需要重新登录。')
 const keyMessage = ref('')
+const aiKeyMessage = ref('')
 
 const displayName = computed(() => profile.value?.nickname || profile.value?.email || '读者')
 const keyPlaceholder = computed(() => {
@@ -110,6 +155,15 @@ const keyPlaceholder = computed(() => {
 const keyStatusText = computed(() => {
   if (keyMessage.value) return keyMessage.value
   return settingsStore.status?.weread_key_configured ? 'WeRead API Key 已配置。' : '尚未配置 WeRead API Key。'
+})
+
+const aiKeyPlaceholder = computed(() => {
+  if (showAiKey.value) return 'sk-xxxxxxxx'
+  return settingsStore.status?.ai_key_configured ? '已加密保存，点击右侧图标查看' : 'sk-xxxxxxxx'
+})
+const aiKeyStatusText = computed(() => {
+  if (aiKeyMessage.value) return aiKeyMessage.value
+  return settingsStore.status?.ai_key_configured ? 'AI API Key 已配置。' : '尚未配置 AI API Key。'
 })
 
 async function loadProfile() {
@@ -172,6 +226,39 @@ async function toggleWeReadKey() {
   settingsStore.updateStatus({
     ...(settingsStore.status ?? { ai_key_configured: false, weread_key_configured: false }),
     weread_key_configured: result.configured
+  })
+}
+
+async function saveAiKeySubmit() {
+  savingAiKey.value = true
+  try {
+    const result = await saveAiKey(aiKey.value)
+    settingsStore.updateStatus({
+      ...(settingsStore.status ?? { ai_key_configured: false, weread_key_configured: false }),
+      ai_key_configured: result.configured
+    })
+    aiKey.value = ''
+    showAiKey.value = false
+    aiKeyMessage.value = result.configured ? 'AI Key 已保存，您可以开始使用伴读功能。' : 'AI Key 为空，已清除配置。'
+  } catch {
+    aiKeyMessage.value = '保存失败，请检查后端服务是否启动。'
+  } finally {
+    savingAiKey.value = false
+  }
+}
+
+async function toggleAiKey() {
+  if (showAiKey.value) {
+    showAiKey.value = false
+    aiKey.value = ''
+    return
+  }
+  const result = await fetchAiKey()
+  aiKey.value = result.api_key
+  showAiKey.value = true
+  settingsStore.updateStatus({
+    ...(settingsStore.status ?? { ai_key_configured: false, weread_key_configured: false }),
+    ai_key_configured: result.configured
   })
 }
 

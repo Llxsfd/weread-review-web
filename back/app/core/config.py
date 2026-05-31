@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     weread_api_base: str = "https://i.weread.qq.com/api/agent/gateway"
     weread_skill_version: str = "1.0.3"
     auth_secret_key: str = "change-me-in-production"
+    encryption_secret: str = "0123456789abcdef0123456789abcdef"
     access_token_expire_minutes: int = 60 * 24 * 14
     cors_origins: list[str] = ["http://127.0.0.1:5173", "http://localhost:5173"]
 

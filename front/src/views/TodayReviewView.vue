@@ -64,9 +64,19 @@
                   </svg>
                   <span>{{ isPlaying ? '停止朗读' : '朗读划线' }}</span>
                 </button>
+                <button class="ai-explore-button" :class="{ 'is-active': showAiPanel }" @click="showAiPanel = !showAiPanel">
+                  <span>✨ AI 伴读</span>
+                </button>
               </div>
               <p v-if="current.note" class="note-line">我的想法：{{ current.note }}</p>
             </div>
+            
+            <AiCompanionPanel 
+              v-if="revealed && showAiPanel" 
+              :highlightId="current.id" 
+              :text="current.text" 
+              :book="current.book" 
+            />
           </div>
         </div>
 
@@ -144,9 +154,11 @@ import {
   type TodayReviewStats
 } from '../api/review'
 import { fetchBooks, type BookItem } from '../api/books'
+import AiCompanionPanel from '../components/AiCompanionPanel.vue'
 
 const current = ref<ReviewCard | null>(null)
 const revealed = ref(true)
+const showAiPanel = ref(false)
 const stats = ref<TodayReviewStats>({ reviewed_count: 0, reviewed_items: [] })
 const loading = ref(false)
 const books = ref<BookItem[]>([])
@@ -204,6 +216,7 @@ async function drawCard() {
     if (mode.value === 'category' && selectedCategory.value) params.category = selectedCategory.value
     current.value = await fetchRandomReview(params)
     revealed.value = true
+    showAiPanel.value = false
   } finally {
     loading.value = false
     stopLoadingAnimation()
@@ -224,7 +237,17 @@ async function answer(rating: string) {
   await answerReviewCard(current.value.id, rating)
   await loadStats()
   revealed.value = true
+  showAiPanel.value = false
   await drawCard()
+}
+
+function saveAiNote(content: string) {
+  if (current.value) {
+    // mock append note to local state for visual effect
+    const prefix = current.value.note ? current.value.note + '\n\n' : ''
+    current.value.note = prefix + `[AI启发] ${content}`
+    // in real world, we would call an API here to persist the note update
+  }
 }
 
 async function switchMode(nextMode: 'random' | 'book' | 'category') {
